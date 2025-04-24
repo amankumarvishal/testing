@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Convert images to PDF or PDF to images with our free, fast, and professional tool.">
+    <meta name="description" content="Convert images to PDF, PDF to images, text to PDF, or extract text from PDF with our free, fast, and professional tool.">
     <meta property="og:title" content="Image & PDF Converter">
-    <meta property="og:description" content="Transform images to PDF or extract images from PDF effortlessly.">
+    <meta property="og:description" content="Transform images to PDF, extract images or text from PDF, or convert text to PDF effortlessly.">
     <meta property="og:image" content="https://<your-username>.github.io/<repo-name>/thumbnail.jpg">
     <title>Image & PDF Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,24 +34,24 @@
             background-clip: text;
             color: transparent;
         }
-        #dropZone {
+        #dropZone, #pdfDropZone, #pdfTextDropZone {
             border: 3px dashed #93c5fd;
             padding: 40px;
             background: linear-gradient(to bottom, #f0f9ff, #ffffff);
             border-radius: 12px;
             transition: all 0.3s ease;
         }
-        .dark #dropZone {
+        .dark #dropZone, .dark #pdfDropZone, .dark #pdfTextDropZone {
             background: linear-gradient(to bottom, #374151, #1f2937);
             border-color: #4b5563;
         }
-        #dropZone.dragover {
+        #dropZone.dragover, #pdfDropZone.dragover, #pdfTextDropZone.dragover {
             border-color: #2563eb;
             background: #dbeafe;
             transform: scale(1.03);
             box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
         }
-        .dark #dropZone.dragover {
+        .dark #dropZone.dragover, .dark #pdfDropZone.dragover, .dark #pdfTextDropZone.dragover {
             background: #4b5563;
         }
         .image-preview {
@@ -145,7 +145,7 @@
     <div class="container mx-auto p-6 max-w-6xl">
         <header class="text-center mb-12">
             <h1 class="text-5xl font-bold tracking-tight">Image & PDF Converter</h1>
-            <p class="text-gray-600 dark:text-gray-300 mt-4 text-xl">Convert images to PDF or extract images from PDF with ease!</p>
+            <p class="text-gray-600 dark:text-gray-300 mt-4 text-xl">Convert images to PDF, extract images or text from PDF, or convert text to PDF with ease!</p>
             <button id="themeToggle" class="mt-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition" aria-label="Toggle dark mode">Toggle Dark Mode</button>
         </header>
 
@@ -154,6 +154,7 @@
                 <button id="imageToPdfTab" class="px-6 py-3 text-lg font-semibold text-blue-600 border-b-4 border-blue-600" aria-label="Image to PDF tab">Image to PDF</button>
                 <button id="pdfToImageTab" class="px-6 py-3 text-lg font-semibold text-gray-600 dark:text-gray-300 border-b-4 border-transparent hover:text-blue-600 dark:hover:text-blue-400 transition" aria-label="PDF to Image tab">PDF to Image</button>
                 <button id="textToPdfTab" class="px-6 py-3 text-lg font-semibold text-gray-600 dark:text-gray-300 border-b-4 border-transparent hover:text-blue-600 dark:hover:text-blue-400 transition" aria-label="Text to PDF tab">Text to PDF</button>
+                <button id="pdfToTextTab" class="px-6 py-3 text-lg font-semibold text-gray-600 dark:text-gray-300 border-b-4 border-transparent hover:text-blue-600 dark:hover:text-blue-400 transition" aria-label="PDF to Text tab">PDF to Text</button>
             </div>
 
             <!-- Image to PDF Section -->
@@ -265,6 +266,22 @@
                 </div>
             </section>
 
+            <!-- PDF to Text Section -->
+            <section id="pdfToTextSection" class="hidden">
+                <div id="pdfTextDropZone" role="region" aria-label="Drag and drop PDF here to extract text">
+                    <p class="text-gray-600 dark:text-gray-300 text-lg font-medium">Drag & drop PDF or click to upload</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Supported format: PDF (Max 20MB)</p>
+                    <input type="file" id="pdfTextInput" accept="application/pdf" class="hidden" aria-label="Upload PDF for text extraction">
+                </div>
+
+                <textarea id="extractedText" class="w-full h-64 p-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 mt-6" placeholder="Extracted text will appear here..." readonly aria-label="Extracted text from PDF"></textarea>
+
+                <button onclick="extractTextFromPdf()" class="mt-8 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold text-lg" aria-label="Extract text from PDF">Extract Text</button>
+                <div class="progress-bar" id="pdfTextProgressBar">
+                    <div class="progress-bar-fill" id="pdfTextProgressBarFill"></div>
+                </div>
+            </section>
+
             <div id="loader" class="loader" role="status" aria-label="Loading"></div>
             <p id="errorMessage" class="text-red-500 mt-4 text-center hidden" role="alert"></p>
         </main>
@@ -295,9 +312,11 @@
         const imageToPdfTab = document.getElementById('imageToPdfTab');
         const pdfToImageTab = document.getElementById('pdfToImageTab');
         const textToPdfTab = document.getElementById('textToPdfTab');
+        const pdfToTextTab = document.getElementById('pdfToTextTab');
         const imageToPdfSection = document.getElementById('imageToPdfSection');
         const pdfToImageSection = document.getElementById('pdfToImageSection');
         const textToPdfSection = document.getElementById('textToPdfSection');
+        const pdfToTextSection = document.getElementById('pdfToTextSection');
 
         imageToPdfTab.addEventListener('click', () => {
             imageToPdfTab.classList.add('text-blue-600', 'border-blue-600');
@@ -306,9 +325,12 @@
             pdfToImageTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             textToPdfTab.classList.remove('text-blue-600', 'border-blue-600');
             textToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            pdfToTextTab.classList.remove('text-blue-600', 'border-blue-600');
+            pdfToTextTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             imageToPdfSection.classList.remove('hidden');
             pdfToImageSection.classList.add('hidden');
             textToPdfSection.classList.add('hidden');
+            pdfToTextSection.classList.add('hidden');
         });
 
         pdfToImageTab.addEventListener('click', () => {
@@ -318,9 +340,12 @@
             imageToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             textToPdfTab.classList.remove('text-blue-600', 'border-blue-600');
             textToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            pdfToTextTab.classList.remove('text-blue-600', 'border-blue-600');
+            pdfToTextTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             pdfToImageSection.classList.remove('hidden');
             imageToPdfSection.classList.add('hidden');
             textToPdfSection.classList.add('hidden');
+            pdfToTextSection.classList.add('hidden');
         });
 
         textToPdfTab.addEventListener('click', () => {
@@ -330,9 +355,27 @@
             imageToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             pdfToImageTab.classList.remove('text-blue-600', 'border-blue-600');
             pdfToImageTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            pdfToTextTab.classList.remove('text-blue-600', 'border-blue-600');
+            pdfToTextTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
             textToPdfSection.classList.remove('hidden');
             imageToPdfSection.classList.add('hidden');
             pdfToImageSection.classList.add('hidden');
+            pdfToTextSection.classList.add('hidden');
+        });
+
+        pdfToTextTab.addEventListener('click', () => {
+            pdfToTextTab.classList.add('text-blue-600', 'border-blue-600');
+            pdfToTextTab.classList.remove('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            imageToPdfTab.classList.remove('text-blue-600', 'border-blue-600');
+            imageToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            pdfToImageTab.classList.remove('text-blue-600', 'border-blue-600');
+            pdfToImageTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            textToPdfTab.classList.remove('text-blue-600', 'border-blue-600');
+            textToPdfTab.classList.add('text-gray-600', 'dark:text-gray-300', 'border-transparent');
+            pdfToTextSection.classList.remove('hidden');
+            imageToPdfSection.classList.add('hidden');
+            pdfToImageSection.classList.add('hidden');
+            textToPdfSection.classList.add('hidden');
         });
 
         // Image to PDF Logic
@@ -641,6 +684,92 @@
             showSuccess('PDF generated successfully!');
         }
 
+        // PDF to Text Logic
+        const pdfTextInput = document.getElementById('pdfTextInput');
+        const pdfTextDropZone = document.getElementById('pdfTextDropZone');
+        const extractedTextArea = document.getElementById('extractedText');
+
+        pdfTextDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            pdfTextDropZone.classList.add('dragover');
+        });
+
+        pdfTextDropZone.addEventListener('dragleave', () => {
+            pdfTextDropZone.classList.remove('dragover');
+        });
+
+        pdfTextDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            pdfTextDropZone.classList.remove('dragover');
+            handlePdfTextFile(e.dataTransfer.files[0]);
+        });
+
+        pdfTextDropZone.addEventListener('click', () => pdfTextInput.click());
+
+        pdfTextInput.addEventListener('change', () => handlePdfTextFile(pdfTextInput.files[0]));
+
+        async function handlePdfTextFile(file) {
+            clearError();
+            if (!file || file.type !== 'application/pdf') {
+                showError('Please upload a valid PDF file.');
+                return;
+            }
+            if (file.size > 20 * 1024 * 1024) {
+                showError('PDF size should be less than 20MB.');
+                return;
+            }
+
+            const fileReader = new FileReader();
+            fileReader.onload = async () => {
+                const pdfData = new Uint8Array(fileReader.result);
+                await extractTextFromPdf(pdfData);
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        async function extractTextFromPdf(pdfData) {
+            const loader = document.getElementById('loader');
+            const progressBar = document.getElementById('pdfTextProgressBar');
+            const progressBarFill = document.getElementById('pdfTextProgressBarFill');
+            loader.style.display = 'block';
+            progressBar.style.display = 'block';
+            clearError();
+            extractedTextArea.value = '';
+
+            try {
+                if (typeof pdfjsLib === 'undefined') {
+                    throw new Error('PDF.js library failed to load. Check script inclusion and network connectivity.');
+                }
+
+                pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+                const loadingTask = pdfjsLib.getDocument({ data: pdfData, disableWorker: true });
+                loadingTask.onProgress = (progress) => {
+                    console.log('PDF loading progress:', progress);
+                };
+                const pdf = await loadingTask.promise;
+                const numPages = pdf.numPages;
+                let fullText = [];
+
+                for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText.push(`Page ${pageNum}:\n${pageText}\n`);
+                    progressBarFill.style.width = (pageNum / numPages) * 100 + '%';
+                }
+
+                extractedTextArea.value = fullText.join('\n');
+                loader.style.display = 'none';
+                progressBar.style.display = 'none';
+                showSuccess('Text extracted successfully!');
+            } catch (error) {
+                console.error('Detailed error extracting text from PDF:', error);
+                showError('Error extracting text from PDF: ' + error.message);
+                loader.style.display = 'none';
+                progressBar.style.display = 'none';
+            }
+        }
+
         // Utility Functions
         function showError(msg) {
             const toast = document.getElementById('toast');
@@ -682,6 +811,9 @@
             }
             if (e.key === 'Enter' && document.activeElement === pdfDropZone) {
                 pdfInput.click();
+            }
+            if (e.key === 'Enter' && document.activeElement === pdfTextDropZone) {
+                pdfTextInput.click();
             }
         });
     </script>
