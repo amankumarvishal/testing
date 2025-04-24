@@ -14,7 +14,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.mjs" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js"></script> <!-- Changed to non-module version -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js"></script> <!-- Added worker script -->
     <link rel="icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -466,7 +467,18 @@
             const zip = new JSZip();
 
             try {
-                const pdf = await window.pdfjsLib.getDocument({ data: pdfData }).promise;
+                // Ensure pdfjsLib is available and configure worker
+                if (typeof pdfjsLib === 'undefined') {
+                    showError('PDF.js library is not loaded. Check console for details.');
+                    console.error('pdfjsLib is undefined');
+                    return;
+                }
+
+                // Set the worker source
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js';
+
+                const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                const pdf = await loadingTask.promise;
                 const numPages = pdf.numPages;
                 const images = [];
 
@@ -509,7 +521,7 @@
                 showSuccess('Images extracted successfully!');
             } catch (error) {
                 console.error('Error converting PDF to images:', error);
-                showError('Error converting PDF to images.');
+                showError('Error converting PDF to images: ' + error.message);
                 loader.style.display = 'none';
                 progressBar.style.display = 'none';
             }
