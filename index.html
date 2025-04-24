@@ -14,16 +14,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf2pic/2.2.0/pdf2pic.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.mjs" type="module"></script>
     <link rel="icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color 0.3s, color 0.3s;
+            background-color: #E0FFE0; /* Light green background for light mode */
         }
         .dark body {
-            background: linear-gradient(to bottom right, #1f2937, #111827);
+            background: #E0FFE0; /* Override dark mode gradient to keep light green */
             color: #e5e7eb;
         }
         h1 {
@@ -401,10 +402,10 @@
                 }
 
                 doc.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
-                progressBarFill.style.width = ${((i + 1) / images.length) * 100}%;
+                progressBarFill.style.width = ((i + 1) / images.length) * 100 + '%';
             }
 
-            doc.save(${fileName}_${new Date().toISOString().split('T')[0]}.pdf);
+            doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
             loader.style.display = 'none';
             progressBar.style.display = 'none';
             showSuccess('PDF generated successfully!');
@@ -465,7 +466,7 @@
             const zip = new JSZip();
 
             try {
-                const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                const pdf = await window.pdfjsLib.getDocument({ data: pdfData }).promise;
                 const numPages = pdf.numPages;
                 const images = [];
 
@@ -489,17 +490,17 @@
                         <button onclick="downloadSingleImage('${imgData}', '${fileNamePrefix}_page${pageNum}.png')" class="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-btn" aria-label="Download image">↓</button>
                     `;
                     pdfPreview.appendChild(imgElement);
-                    gsap.from(imgన్imgElement, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out' });
+                    gsap.from(imgElement, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out' });
 
-                    zip.file(${fileNamePrefix}_page${pageNum}.png, imgData.split(',')[1], { base64: true });
-                    progressBarFill.style.width = ${(pageNum / numPages) * 100}%;
+                    zip.file(`${fileNamePrefix}_page${pageNum}.png`, imgData.split(',')[1], { base64: true });
+                    progressBarFill.style.width = (pageNum / numPages) * 100 + '%';
                 }
 
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 const zipUrl = URL.createObjectURL(zipBlob);
                 const link = document.createElement('a');
                 link.href = zipUrl;
-                link.download = ${fileNamePrefix}_images.zip;
+                link.download = `${fileNamePrefix}_images.zip`;
                 link.click();
                 URL.revokeObjectURL(zipUrl);
 
@@ -507,6 +508,7 @@
                 progressBar.style.display = 'none';
                 showSuccess('Images extracted successfully!');
             } catch (error) {
+                console.error('Error converting PDF to images:', error);
                 showError('Error converting PDF to images.');
                 loader.style.display = 'none';
                 progressBar.style.display = 'none';
